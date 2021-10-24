@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class=" d-md-block col-6 masthead-image">
+            {% if "placeholder" in post.featured_image.url %}
+            <img src="https://res.cloudinary.com/dt2jqh5yo/image/upload/v1635109651/book_placeholder.jpg"
+                class="card-img-top">
+            {% else %}
+            <img src="{{ post.features_image.url }}" class="card-img-top">
+            {% endif %}
+        </div>
+
+
+        <div class="col-6">
+
+            <div>
+                <div class="card mb-1 ">
+                    <section class="text-center text-white bg-grey">
+                        <h1 class="card-title txt-red"><strong>{{ post.title }}</strong></h1>
+                        <h6 class="card-subtitle mb-2 text-white">{{ post.subtitle }}</h6>
+                    </section>
+                    <a href="#" class="post_link"></a>
+                    <div class="card-body ">
+                        
+                        <p class="card-text"> {{ post.content }} </p>
+                        <p class="card-text"><small class="text-muted">Public rating: </small></p>
+                        <span>
+                            <span class="fa fa-star checked"></span>
+                            <span class="fa fa-star checked"></span>
+                            <span class="fa fa-star checked"></span>
+                            <span class="fa fa-star"></span>
+                            <span class="fa fa-star"></span>
+                        </span>
+                        <p class="card-text"><small class="text-muted">Created by: {{ post_author }} date:
+                                {{ post.created_on }}
+                            </small></p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-8 card mb-4  mt-3 ">
+        <h3>Comments:</h3>
+        <div class="card-body">
+            {% for comment in comments %}
+            <div class="comments" style="padding: 10px;">
+                <p class="font-weight-bold">
+                    {{ comment.name }}
+                    <span class=" text-muted font-weight-normal">
+                        {{ comment.created_on }}
+                    </span> wrote:
+                </p>
+                {{ comment.body | linebreaks }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col-md-4 card mb-4  mt-3 ">
+        <!-- <div class="card-body">
+                {% if commented %}
+                <div class="alert alert-success" role="alert">
+                    Your comment is awaiting approval
+                </div>
+                {% else %}
+                {% if user.is_authenticated %}
+    
+                <h3>Leave a comment:</h3>
+                <p>Posting as: {{ user.username }}</p>
+                <form method="post" style="margin-top: 1.3em;">
+                    {{ comment_form}}
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-signup btn-lg">Submit</button>
+                </form>
+                {% endif %}
+                {% endif %}
+            </div> -->
+    </div>
+</div>
+
+</div>
+
+{% endblock content %}
+
+
+
+
+
+
+
+
+from django.shortcuts import render, get_object_or_404
+from django.views import generic, View
+from .models import Post
+
+
+class PostList(generic.ListView):
+    model = Post
+    queryset = Post.objects.filter(status=1).order_by('-created_on')
+    template_name = 'index.html'
+    paginate_by = 9
+
+class DetailView(View):
+
+    def get(self, request, slug, *args, **kwargs):
+        queryset = Post.objects.filter(status=1)
+        post = get_object_or_404(queryset, slug=slug)
+        comments = post.comments.filter(approved=True).order_by("-created_on")
+
+        return render(
+            request,
+            "detail_view.html",
+            {
+                "post": post,
+                "comments": comments,
+                "commented": False,
+                "comment_form": CommentForm()
+            },
+        )
+    
+    # def post(self, request, slug, *args, **kwargs):
+
+    #     queryset = Post.objects.filter(status=1)
+    #     post = get_object_or_404(queryset, slug=slug)
+    #     comments = post.comments.filter(approved=True).order_by("-created_on")
+
+    #     comment_form = CommentForm(data=request.POST)
+    #     if comment_form.is_valid():
+    #         comment_form.instance.email = request.user.email
+    #         comment_form.instance.name = request.user.username
+    #         comment = comment_form.save(commit=False)
+    #         comment.post = post
+    #         comment.save()
+    #     else:
+    #         comment_form = CommentForm()
+
+    #     return render(
+    #         request,
+    #         "post_detail.html",
+    #         {
+    #             "post": post,
+    #             "comments": comments,
+    #             "commented": True,
+    #             "comment_form": comment_form,
+    #         },
+    #     )
